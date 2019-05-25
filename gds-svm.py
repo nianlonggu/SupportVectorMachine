@@ -9,9 +9,8 @@ def generate_folder(path):
 	return path
 
 
-def load_data(num_samples = 1000, seed = 1000):
+def load_data(num_samples = 1000):
 
-	np.random.seed(seed)
 	x1 = np.random.multivariate_normal( [1,1], [[1,-0.3],[-0.3,2]], num_samples  )
 	x2 = np.random.multivariate_normal( [7,7], [[1,-0.3],[-0.3,2]], num_samples )
 	y1 = np.ones([num_samples]) *-1
@@ -70,7 +69,7 @@ def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_i
 	plt.close()
 
 ## input the (x,y) of training dataset, output the hyperplane parameters w and b
-def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001 ):
+def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001, plot_training_results = False ):
 	# initialize w and b
 	x_dim = x.shape[-1]
 	w = np.random.normal(size=x_dim)
@@ -94,14 +93,16 @@ def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001 ):
 		current_iter+=1
 		if current_iter % 4000 ==0:
 			print("regularization loss: %f, hinge loss: %f, totoal loss: %f"%( loss1,loss2, loss ))
-			plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gds-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False )
+			if plot_training_results:
+				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gds-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False )
 		
 		if current_iter >= max_iter:
 			break
 	return w,b
 
-
+np.random.seed(1000)
 x, y = load_data()
 np.random.seed()
-w,b =svm(x,y)
-plot_results(x,y, w,b)
+mylambda = 0.001
+w,b =svm(x,y, mylambda = mylambda)
+plot_results(x,y, w,b, title = "lambda=%f"%(mylambda) )
