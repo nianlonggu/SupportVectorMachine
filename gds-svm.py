@@ -100,9 +100,9 @@ def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001, p
 			break
 	return w,b
 
-np.random.seed(1000)
-x, y = load_data()
+# np.random.seed(1000)
+x, y = load_data(2000)
 np.random.seed()
 mylambda = 0.001
-w,b =svm(x,y, mylambda = mylambda)
+w,b =svm(x,y, mylambda = mylambda, plot_training_results = True, max_iter=500000)
 plot_results(x,y, w,b, title = "lambda=%f"%(mylambda) )

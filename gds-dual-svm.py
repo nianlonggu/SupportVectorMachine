@@ -117,7 +117,7 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1e-5, plot_train
 	b = np.mean( y_support - np.matmul( x_support,w ))
 	return w,b
 
-np.random.seed(1000)
+# np.random.seed(1000)
 x, y = load_data(300)
 w,b =svm(x,y,max_iter = 800000,plot_training_results = True)
 plot_results(x,y, w,b )

@@ -1,14 +1,26 @@
 import numpy as np
-
-x_batch = np.array([[1,2],[3,4]])
-w = np.array([1,2])
-b = np.array([-10])
-y_batch = np.array([2,2])
+import matplotlib.pyplot as plt
 
 
-c=np.mean( np.expand_dims(np.maximum(1- y_batch*(np.matmul( x_batch,w )+b), 0)*y_batch, axis =-1) * x_batch, axis = 0 , keepdims = False)
-d = np.mean(np.maximum(1- y_batch*(np.matmul( x_batch,w )+b), 0)*y_batch, axis =0, keepdims = False)
 
-print(c.shape)
-print(d)
-# print(cc)
+# def kernel_func(a,b, mode):
+# 	if mode =="add":
+# 		return a+b
+# 	elif mode == "minus":
+# 		return a-b
+
+# def test(mode):
+# 	def my_kernel_func(a,b):
+# 		return kernel_func(a,b, mode)
+
+# 	return my_kernel_func
+
+
+# mm=test("minus")
+# print(mm(1,2))
+
+a=[0,0,1,1]
+b=[0,1,0,1]
+
+plt.scatter(a,b, c= np.array([[1,0,0],[0,1,0],[0,0,1],[0,0,0]]) )
+plt.show()
