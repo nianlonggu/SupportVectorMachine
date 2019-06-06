@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from PCA import *
+from utils import *
 
 def generate_folder(path):
 	if not os.path.exists(path):
@@ -20,29 +22,30 @@ def load_data(num_samples = 1000):
 
 	return x, y
 
+def within_class_average_distance(x,y):
+	x_pos = x[y==1]
+	x_neg = x[y==-1]
+	dis_matrix_pos = distance_matrix(x_pos,x_pos)
+	dis_matrix_neg = distance_matrix(x_neg, x_neg)
+	return (np.mean(dis_matrix_pos)+np.mean(dis_matrix_neg))/2
 
 def plot_results( x,y, params, classifier, title = "", img_save_path = None , show_img = True ):
 
-	# x_negative_1 =[]
-	# x_positive_1 =[]
-	# for ind in range(x.shape[0]):
-	# 	if y[ind] == -1:
-	# 		x_negative_1.append( x[ind] )
-	# 	else:
-	# 		x_positive_1.append( x[ind] ) 
-	# x_negative_1 = np.asarray(x_negative_1)
-	# x_positive_1 = np.asarray(x_positive_1) 
-# for each point
-	# plt.plot(x_negative_1[:,0], x_negative_1[:,1], "o", c= 'black', markerfacecolor='none')
-	# plt.plot(x_positive_1[:,0], x_positive_1[:,1], 's', c= 'black', markerfacecolor='none')
-
 	fig, ax = plt.subplots()
-
 	pred_y = classifier(x)
+
+	x_low_dim, P = PCA(x, 2, return_projection_matrix = True)
+
+
+	x_support =  x[params["support_ind"]]
+	y_support = y[params["support_ind"]]
+	pred_y_support = pred_y[params["support_ind"]]
+	x_support_low_dim = x_low_dim[params["support_ind"]]
+
 
 	for ind in range(x.shape[0]):
 		if y[ind] == 1:
-			mshape = "s"
+			mshape = "^"
 		else:
 			mshape = "o"
 		if pred_y[ind] == 1:
@@ -50,16 +53,13 @@ def plot_results( x,y, params, classifier, title = "", img_save_path = None , sh
 		else:
 			color = "b"
 
-		plt.plot(x[ind,0], x[ind,1], mshape, c= color, markerfacecolor='none', markeredgewidth=0.4, markersize =4)
+		plt.plot(x_low_dim[ind,0], x_low_dim[ind,1], mshape, c= color, markerfacecolor='none', markeredgewidth=0.4, markersize =4)
 
 
-	x_support = params["x_support"]
-	y_support = params["y_support"]
-	pred_y_support = classifier(x_support)
 
 	for ind in range(x_support.shape[0]):
 		if y_support[ind] == 1:
-			mshape = "s"
+			mshape = "^"
 		else:
 			mshape = "o"
 		if pred_y_support[ind] == 1:
@@ -67,17 +67,18 @@ def plot_results( x,y, params, classifier, title = "", img_save_path = None , sh
 		else:
 			color = "b"
 
-		if y_support[ind]!= pred_y_support[ind]:
-			# print("HAHA")
-			plt.plot(x_support[ind,0], x_support[ind,1], "o", c= "g", markersize =8, markerfacecolor='none')
-		plt.plot(x_support[ind,0], x_support[ind,1], mshape, c= color, markersize =4)
+		plt.plot(x_support_low_dim[ind,0], x_support_low_dim[ind,1], mshape, c= color, markersize =4)
 
+
+	for ind in range(x.shape[0]):
+		if y[ind]!= pred_y[ind]:
+			plt.plot(x_low_dim[ind,0], x_low_dim[ind,1], "o", c= "g", markersize =9, markerfacecolor='none')
 
 
 	plt.xlabel("x")
 	plt.ylabel("y")
-	plt.xlim([min(x[:,0])-0.5, max(x[:,0])+0.5 ])
-	plt.ylim([min(x[:,1])-0.5, max(x[:,1])+0.5 ])
+	plt.xlim([min(x_low_dim[:,0])-0.5, max(x_low_dim[:,0])+0.5 ])
+	plt.ylim([min(x_low_dim[:,1])-0.5, max(x_low_dim[:,1])+0.5 ])
 
 	plt.title(title)
 	if img_save_path is not None:
@@ -207,7 +208,9 @@ def train_svm( x,y, C=np.Infinity, kernel_type = None, max_epoch =100 , smo_iter
 		if plot_training_results:
 			support_ind= np.argwhere(lamb>1e-7)[:,0]
 			x_support, y_support, lamb_support = x[support_ind], y[support_ind], lamb[support_ind]
-			params={"x_support": x_support,
+			params={
+			"support_ind": support_ind,
+			"x_support": x_support,
 			"y_support": y_support,
 			"lamb_support": lamb_support,
 			"b": b}
@@ -222,7 +225,9 @@ def train_svm( x,y, C=np.Infinity, kernel_type = None, max_epoch =100 , smo_iter
 	def my_classifier( input_x, decision_mode="hard"):
 		return svm_classifier( x_support, y_support, lamb_support, b,  input_x, kernel_type= kernel_type , decision_mode= decision_mode )
 
-	params={"x_support": x_support,
+	params={
+			"support_ind": support_ind,
+			"x_support": x_support,
 			"y_support": y_support,
 			"lamb_support": lamb_support,
 			"b": b}
@@ -232,5 +237,9 @@ def train_svm( x,y, C=np.Infinity, kernel_type = None, max_epoch =100 , smo_iter
 
 
 x, y = load_data(300)
-params , my_classifier =  train_svm(x,y,C=10,  plot_training_results=True, kernel_type = {"name":"GAUSSIAN", "params":[3]})
+
+
+
+
+params , my_classifier =  train_svm(x,y,C=10,  plot_training_results=True, kernel_type = {"name":"GAUSSIAN", "params":[ within_class_average_distance(x,y) ]})
 print(my_classifier( [[1,2]] ))
