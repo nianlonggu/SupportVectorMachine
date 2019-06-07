@@ -21,7 +21,7 @@ def load_data(num_samples = 1000):
 	return x, y
 
 
-def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_img = True ):
+def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_img = True, support_ind = None  ):
 
 	x_negative_1 =[]
 	x_positive_1 =[]
@@ -33,8 +33,25 @@ def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_i
 	x_negative_1 = np.asarray(x_negative_1)
 	x_positive_1 = np.asarray(x_positive_1) 
 
-	plt.plot(x_negative_1[:,0], x_negative_1[:,1], "o", markerfacecolor='none')
-	plt.plot(x_positive_1[:,0], x_positive_1[:,1], 's', markerfacecolor='none')
+	plt.plot(x_negative_1[:,0], x_negative_1[:,1], "o",color="#6495ED" , markerfacecolor='none')
+	plt.plot(x_positive_1[:,0], x_positive_1[:,1], 's',color="#FFA500" , markerfacecolor='none')
+
+	if support_ind is not None:
+		x_support = x[support_ind]
+		y_support = y[support_ind]
+		x_support_negative_1=[]
+		x_support_positive_1=[]
+
+		for ind in range(x_support.shape[0]):
+			if y_support[ind] == -1:
+				x_support_negative_1.append( x_support[ind] )
+			else:
+				x_support_positive_1.append( x_support[ind] ) 
+		x_support_negative_1 = np.asarray(x_support_negative_1)
+		x_support_positive_1 = np.asarray(x_support_positive_1) 	
+
+		plt.plot(x_support_negative_1[:,0], x_support_negative_1[:,1], "o", color="#6495ED" )
+		plt.plot(x_support_positive_1[:,0], x_support_positive_1[:,1], 's', color="#FFA500" )
 
 	if w is not None and b is not None:
 		if w[1] != 0:
@@ -69,20 +86,25 @@ def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_i
 	plt.close()
 
 ## input the (x,y) of training dataset, output the hyperplane parameters w and b
-def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1e-5, plot_training_results = False ):
+def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1E-7, plot_training_results = False):
 	# initialize w and b
 	x_dim = x.shape[-1]
 	w = np.random.normal(size=x_dim)
 	b = np.random.normal()
-
 	num_samples = x.shape[0]
+
+	kernel_matrix = np.zeros([num_samples, num_samples])
+	for r in range( num_samples ):
+		for c in range( num_samples ):
+			kernel_matrix[r,c] = np.dot( x[r], x[c] )	
 
 	## we also need to initialize the dual parameter lamb and perform gradient descent algorithm on it
 	lamb = np.absolute(np.random.normal(size = x.shape[0] ))
 	current_iter = 0
 	# start training
 	while True:
-		dLdlamb = -1 +  np.matmul(np.matmul( np.expand_dims(y , axis =-1)*x , x.T), y*lamb)  + c1*np.dot(lamb, y)*y 
+		# dLdlamb = -1 +  np.matmul(np.matmul( np.expand_dims(y , axis =-1)*x , x.T), y*lamb)  + c1*np.dot(lamb, y)*y 
+		dLdlamb = -1 + np.matmul( kernel_matrix, lamb*y )*y  + c1 * np.dot( lamb, y )*y
 		lamb -= lr * dLdlamb
 		## perform clip
 		lamb = np.maximum(lamb, 0)
@@ -103,7 +125,7 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1e-5, plot_train
 			w = np.matmul( x_support.T, lamb_support*y_support )
 			b = np.mean( y_support - np.matmul( x_support,w ))
 			if plot_training_results:
-				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gds-dual-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False )
+				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gd-dual-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False, support_ind = support_ind )
 		
 		if current_iter >= max_iter:
 			break
@@ -115,9 +137,9 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1e-5, plot_train
 	x_support, y_support, lamb_support = x[support_ind], y[support_ind], lamb[support_ind]
 	w = np.matmul( x_support.T, lamb_support*y_support )
 	b = np.mean( y_support - np.matmul( x_support,w ))
-	return w,b
+	return w,b, support_ind
 
 # np.random.seed(1000)
 x, y = load_data(300)
-w,b =svm(x,y,max_iter = 800000,plot_training_results = True)
-plot_results(x,y, w,b )
+w,b, support_ind =svm(x,y,max_iter = 800000,plot_training_results = True)
+plot_results(x,y, w,b, support_ind=support_ind )

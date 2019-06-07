@@ -94,7 +94,7 @@ def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001, p
 		if current_iter % 4000 ==0:
 			print("regularization loss: %f, hinge loss: %f, totoal loss: %f"%( loss1,loss2, loss ))
 			if plot_training_results:
-				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gds-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False )
+				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gd-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False )
 		
 		if current_iter >= max_iter:
 			break
