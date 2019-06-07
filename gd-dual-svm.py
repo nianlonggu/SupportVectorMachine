@@ -12,7 +12,7 @@ def generate_folder(path):
 def load_data(num_samples = 1000):
 
 	x1 = np.random.multivariate_normal( [1,1], [[1,-0.3],[-0.3,2]], num_samples  )
-	x2 = np.random.multivariate_normal( [7,7], [[1,-0.3],[-0.3,2]], num_samples )
+	x2 = np.random.multivariate_normal( [4,4], [[1,-0.3],[-0.3,2]], num_samples )
 	y1 = np.ones([num_samples]) *-1
 	y2 = np.ones([num_samples]) *1
 	x = np.concatenate([x1,x2], axis =0)
@@ -107,7 +107,8 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1E-7, plot_train
 		dLdlamb = -1 + np.matmul( kernel_matrix, lamb*y )*y  + c1 * np.dot( lamb, y )*y
 		lamb -= lr * dLdlamb
 		## perform clip
-		lamb = np.maximum(lamb, 0)
+		lamb =  np.minimum(np.maximum(lamb, 0), 10)
+		# lamb = np.maximum(lamb, 0)
 		current_iter+=1
 		if current_iter % 20000 ==0:
 			# define the loss function:
@@ -139,7 +140,7 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1E-7, plot_train
 	b = np.mean( y_support - np.matmul( x_support,w ))
 	return w,b, support_ind
 
-# np.random.seed(1000)
+np.random.seed(1001)
 x, y = load_data(300)
 w,b, support_ind =svm(x,y,max_iter = 800000,plot_training_results = True)
 plot_results(x,y, w,b, support_ind=support_ind )
