@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-# from PCA import *
-from utils import *
 
 def generate_folder(path):
 	if not os.path.exists(path):
@@ -60,7 +58,6 @@ def plot_results( x,y, params, classifier, title = "", img_save_path = None , sh
 	fig, ax = plt.subplots()
 	pred_y = classifier(x)
 
-	# x_low_dim, P = PCA(x, 2, return_projection_matrix = True)
 	x_low_dim = x
 
 
