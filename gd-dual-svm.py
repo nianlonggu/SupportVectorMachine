@@ -12,11 +12,17 @@ def generate_folder(path):
 def load_data(num_samples = 1000):
 
 	x1 = np.random.multivariate_normal( [1,1], [[1,-0.3],[-0.3,2]], num_samples  )
-	x2 = np.random.multivariate_normal( [4,4], [[1,-0.3],[-0.3,2]], num_samples )
+	x2 = np.random.multivariate_normal( [7,7], [[1,-0.3],[-0.3,2]], num_samples )
 	y1 = np.ones([num_samples]) *-1
 	y2 = np.ones([num_samples]) *1
 	x = np.concatenate([x1,x2], axis =0)
 	y = np.concatenate([y1,y2], axis =0)
+
+	# Add outliers.
+	x_outlier = np.array([[8,8]])
+	y_outlier = np.array([-1])
+	x = np.concatenate([x,x_outlier ], axis =0)
+	y = np.concatenate([y,y_outlier ], axis =0)
 
 	return x, y
 
@@ -86,7 +92,7 @@ def plot_results( x,y, w=None, b=None, title = "", img_save_path = None , show_i
 	plt.close()
 
 ## input the (x,y) of training dataset, output the hyperplane parameters w and b
-def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1E-7, plot_training_results = False):
+def svm(x,y, C=np.Inf, max_iter = 100000, lr = 0.00001,  c1=100,  epsilon= 1E-7, plot_training_results = False):
 	# initialize w and b
 	x_dim = x.shape[-1]
 	w = np.random.normal(size=x_dim)
@@ -103,44 +109,37 @@ def svm(x,y, max_iter = 100000, lr = 0.00001,  c1=10,  epsilon= 1E-7, plot_train
 	current_iter = 0
 	# start training
 	while True:
-		# dLdlamb = -1 +  np.matmul(np.matmul( np.expand_dims(y , axis =-1)*x , x.T), y*lamb)  + c1*np.dot(lamb, y)*y 
 		dLdlamb = -1 + np.matmul( kernel_matrix, lamb*y )*y  + c1 * np.dot( lamb, y )*y
 		lamb -= lr * dLdlamb
 		## perform clip
-		lamb =  np.minimum(np.maximum(lamb, 0), 10)
-		# lamb = np.maximum(lamb, 0)
+		lamb =  np.minimum(np.maximum(lamb, 0), C )
+
 		current_iter+=1
 		if current_iter % 20000 ==0:
 			# define the loss function:
 			loss1 = -1*np.sum( lamb ) + 0.5*np.linalg.norm( np.matmul(x.T, lamb*y ) )**2 
 			loss2 = c1 * 0.5 * np.dot(lamb, y) **2
 			loss = loss1  +loss2
-			print("loss1: %f, loss2: %f, overall loss: %f"%( loss1, loss2, loss ))
+			print("loss1: %f, loss2: %f, overall loss: %f, maximum lamb: %f"%( loss1, loss2, loss, np.max( lamb ) ))
 			w = np.matmul( x.T, lamb*y )
-			# select a support vector
-			support_ind = []
-			for ind in range(x.shape[0]):
-				if lamb[ind] > epsilon:
-					support_ind.append(ind)
-			x_support, y_support, lamb_support = x[support_ind], y[support_ind], lamb[support_ind]
-			w = np.matmul( x_support.T, lamb_support*y_support )
-			b = np.mean( y_support - np.matmul( x_support,w ))
+
+			support_w_ind = np.argwhere( lamb >epsilon )[:,0]
+			support_b_ind = np.argwhere( np.logical_and( lamb > epsilon, lamb< C - epsilon ) )[:,0]			
+			w = np.matmul( x[ support_w_ind].T, lamb[ support_w_ind ]  * y[support_w_ind] )
+			b = np.mean( y[support_b_ind] - np.matmul( x[support_b_ind] ,w ))
 			if plot_training_results:
-				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gd-dual-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False, support_ind = support_ind )
+				plot_results(x,y, w,b, title= "iteration %d"%(current_iter), img_save_path=generate_folder("results/gd-dual-svm/")+"results-iter%d.jpg"%(current_iter), show_img=False, support_ind = support_w_ind )
 		
 		if current_iter >= max_iter:
 			break
 	# select a support vector
-	support_ind = []
-	for ind in range(x.shape[0]):
-		if lamb[ind] > epsilon:
-			support_ind.append(ind)
-	x_support, y_support, lamb_support = x[support_ind], y[support_ind], lamb[support_ind]
-	w = np.matmul( x_support.T, lamb_support*y_support )
-	b = np.mean( y_support - np.matmul( x_support,w ))
-	return w,b, support_ind
+	support_w_ind = np.argwhere( lamb >epsilon )[:,0]
+	support_b_ind = np.argwhere( np.logical_and( lamb > epsilon, lamb< C - epsilon ) )[:,0]			
+	w = np.matmul( x[ support_w_ind].T, lamb[ support_w_ind ]  * y[support_w_ind] )
+	b = np.mean( y[support_b_ind] - np.matmul( x[support_b_ind] ,w ))
+	return w,b, support_w_ind, support_b_ind
 
 np.random.seed(1001)
 x, y = load_data(300)
-w,b, support_ind =svm(x,y,max_iter = 800000,plot_training_results = True)
-plot_results(x,y, w,b, support_ind=support_ind )
+w,b, support_w_ind, support_b_ind =svm(x,y, C= 100, max_iter = 2000000,plot_training_results = True)
+plot_results(x,y, w,b, support_ind=support_w_ind )

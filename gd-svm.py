@@ -18,6 +18,12 @@ def load_data(num_samples = 1000):
 	x = np.concatenate([x1,x2], axis =0)
 	y = np.concatenate([y1,y2], axis =0)
 
+	# Add outliers.
+	x_outlier = np.array([[8,8]])
+	y_outlier = np.array([-1])
+	x = np.concatenate([x,x_outlier ], axis =0)
+	y = np.concatenate([y,y_outlier ], axis =0)
+
 	return x, y
 
 
@@ -100,8 +106,8 @@ def svm(x,y, max_iter = 100000, lr = 0.1, batch_size = 100, mylambda = 0.0001, p
 			break
 	return w,b
 
-# np.random.seed(1000)
-x, y = load_data(2000)
+np.random.seed(1001)
+x, y = load_data(300)
 np.random.seed()
 mylambda = 0.001
 w,b =svm(x,y, mylambda = mylambda, plot_training_results = True, max_iter=500000)

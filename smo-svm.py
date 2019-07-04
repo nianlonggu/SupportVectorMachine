@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from PCA import *
+# from PCA import *
 from utils import *
 
 def generate_folder(path):
@@ -12,15 +12,41 @@ def generate_folder(path):
 
 
 def load_data(num_samples = 1000):
+	x1 = []
+	x2 = []
+	for _ in range(num_samples):
+		while True:
+			r_x = np.random.multivariate_normal( [0,1], [[2,0],[0,1]], 1 )
+			if r_x[0,1]>np.sin( r_x[0,0] )+0.5:
+				x1.append( r_x )
+				break
+		while True:
+			r_x = np.random.multivariate_normal( [0,-1], [[2,0],[0,1]], 1 )
+			if r_x[0,1]<np.sin( r_x[0,0] ):
+				x2.append( r_x )
+				break
 
-	x1 = np.random.multivariate_normal( [1,1], [[1,-0.3],[-0.3,2]], num_samples  )
-	x2 = np.random.multivariate_normal( [4,4], [[1,-0.3],[-0.3,2]], num_samples )
+
+	x1 = np.concatenate( x1, axis =0 )
+	x2 = np.concatenate( x2, axis =0)
 	y1 = np.ones([num_samples]) *-1
 	y2 = np.ones([num_samples]) *1
 	x = np.concatenate([x1,x2], axis =0)
 	y = np.concatenate([y1,y2], axis =0)
 
 	return x, y
+
+def distance_matrix( X,Y, metric = "Euclidean" ):
+	def distance( x,y ):
+		if metric == "Euclidean":
+			return np.linalg.norm(x-y)
+	n_row = X.shape[0]
+	n_col = Y.shape[0]
+	dis_matrix = np.zeros([n_row, n_col] )
+	for r in range( n_row ):
+		for c in range(n_col ):
+			dis_matrix[r][c] = distance( X[r], Y[c])
+	return dis_matrix
 
 def within_class_average_distance(x,y):
 	x_pos = x[y==1]
@@ -34,7 +60,8 @@ def plot_results( x,y, params, classifier, title = "", img_save_path = None , sh
 	fig, ax = plt.subplots()
 	pred_y = classifier(x)
 
-	x_low_dim, P = PCA(x, 2, return_projection_matrix = True)
+	# x_low_dim, P = PCA(x, 2, return_projection_matrix = True)
+	x_low_dim = x
 
 
 	x_support =  x[params["support_ind"]]
